@@ -2,8 +2,25 @@ package compile
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
+
+// regionRe matches a managed region. RE2 has no backreferences, so the END
+// marker is matched generically; bodies are non-greedy and regions do not
+// nest, so the first END after a BEGIN is its match.
+var regionRe = regexp.MustCompile(`(?s)<!-- BEGIN ab:(\w+) (\S+) -->(.*?)<!-- END ab:\w+ \S+ -->`)
+
+// MergeManagedRegions applies every managed region found in compiled into dest,
+// preserving any hand-written content outside the regions. Used when installing
+// a managed rules file (CLAUDE.md / AGENTS.md) over an existing one.
+func MergeManagedRegions(dest, compiled []byte) []byte {
+	out := dest
+	for _, m := range regionRe.FindAllSubmatch(compiled, -1) {
+		out = MergeManaged(out, string(m[1]), string(m[2]), strings.Trim(string(m[3]), "\n"))
+	}
+	return out
+}
 
 // MergeManaged merges body into existing under a managed region delimited by
 // HTML comment markers named for namespace and id. Re-running replaces the

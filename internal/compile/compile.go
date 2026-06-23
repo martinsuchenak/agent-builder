@@ -36,6 +36,8 @@ type TargetSpec struct {
 	RulesFile          string
 	AgentDir           string
 	PowerDir           string
+	InstallRoot        string // default install destination (user-global; ~ expanded)
+	InstallStrip       string // path prefix stripped from relpaths on default install
 }
 
 // TargetSpecs holds the built-in per-target output conventions.
@@ -43,23 +45,27 @@ var TargetSpecs = map[string]TargetSpec{
 	"claude": {
 		Name: "claude", CommandDir: ".claude/commands", CommandFrontmatter: false,
 		CommandArgBase: 0, SkillDir: ".claude/skills", RulesFile: "CLAUDE.md", AgentDir: ".claude/agents",
+		InstallRoot: "~/.claude", InstallStrip: ".claude/",
 	},
 	"opencode": {
 		Name: "opencode", CommandDir: ".opencode/commands", CommandFrontmatter: true,
 		CommandArgBase: 1, SkillDir: ".opencode/skills", RulesFile: "AGENTS.md", AgentDir: ".opencode/agents",
+		InstallRoot: "~/.config/opencode", InstallStrip: ".opencode/",
 	},
 	"codex": {
 		Name: "codex", CommandDir: ".codex/prompts", CommandFrontmatter: true,
 		CommandArgBase: 1, SkillDir: ".agents/skills", RulesFile: "AGENTS.md", AgentDir: ".codex/agents",
+		InstallRoot: "~/.codex", InstallStrip: ".codex/",
 	},
 	"copilot": {
 		Name: "copilot", CommandDir: ".github/prompts", CommandFrontmatter: true,
 		CommandArgBase: 1, SkillDir: ".agents/skills", RulesFile: ".github/copilot-instructions.md", AgentDir: ".github/chatmodes",
+		InstallRoot: ".", InstallStrip: "",
 	},
 	"kiro": {
 		Name: "kiro", CommandDir: ".kiro/steering", CommandFrontmatter: false,
 		CommandArgBase: 1, SkillDir: ".kiro/skills", RulesFile: "AGENTS.md", AgentDir: "",
-		PowerDir: ".kiro/powers",
+		PowerDir: ".kiro/powers", InstallRoot: "~/.kiro", InstallStrip: ".kiro/",
 	},
 }
 

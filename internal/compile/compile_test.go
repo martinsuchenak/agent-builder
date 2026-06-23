@@ -208,6 +208,23 @@ func TestCopilotRuleCompiler(t *testing.T) {
 	}
 }
 
+func TestMergeManagedRegionsPreservesOutsideContent(t *testing.T) {
+	compiled := []byte("<!-- BEGIN ab:rule a -->\nA\n<!-- END ab:rule a -->\n" +
+		"<!-- BEGIN ab:command b -->\nB\n<!-- END ab:command b -->\n")
+	dest := []byte("hand intro\n\n<!-- BEGIN ab:rule a -->\nOLD A\n<!-- END ab:rule a -->\n")
+	out := compile.MergeManagedRegions(dest, compiled)
+	s := string(out)
+	if !strings.Contains(s, "hand intro") {
+		t.Errorf("outside content lost:\n%s", s)
+	}
+	if strings.Contains(s, "OLD A") || !strings.Contains(s, "A") {
+		t.Errorf("rule a not replaced:\n%s", s)
+	}
+	if !strings.Contains(s, "B") {
+		t.Errorf("command b not added:\n%s", s)
+	}
+}
+
 func TestExecuteSkipErrorsAndOnlyKind(t *testing.T) {
 	reg := canon.NewToolRegistry()
 	good := &canon.Artifact{Meta: canon.Metadata{ID: "good", Kind: canon.KindCommand}, Body: "plain"}

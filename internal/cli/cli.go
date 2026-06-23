@@ -17,6 +17,7 @@ import (
 	_ "agent-builder/internal/compile/kiro"
 	_ "agent-builder/internal/compile/opencode"
 	_ "agent-builder/internal/compile/power"
+	"agent-builder/internal/install"
 	"agent-builder/internal/token"
 )
 
@@ -31,6 +32,7 @@ Usage:
 
 Commands:
   compile   Compile artifacts to one or more targets
+  install   Install compiled output into each target's config location
   validate  Check canonical artifacts for errors
   new       Scaffold a new canonical artifact (kind: command|skill|rule|agent|power)
   targets   List configured targets
@@ -48,6 +50,12 @@ Compile flags:
   --continue         keep going after errors (skip and report)
   --interactive      force interactive prompting (else auto when stdin is a TTY)
   --non-interactive  never prompt; undefined tools error out
+
+Install flags:
+  --target <name>    target to install (repeatable; default all known)
+  --dest <dir>       install root (default: each target's user config dir; raw paths)
+  --force            overwrite existing files without prompting
+  --non-interactive  never prompt; existing files are skipped
 `
 
 // Main dispatches a subcommand from args and returns the process exit code.
@@ -59,6 +67,8 @@ func Main(args []string) int {
 	switch args[0] {
 	case "compile":
 		return runCompile(args[1:])
+	case "install":
+		return runInstall(args[1:])
 	case "validate":
 		return runValidate(args[1:])
 	case "new":
@@ -197,6 +207,56 @@ func runCompile(args []string) int {
 	if failed > 0 {
 		return 1
 	}
+	return 0
+}
+
+func runInstall(args []string) int {
+	var buildRoot, dest string
+	var targets []string
+	var force, nonInteractive bool
+	pos, err := parseFlags(args,
+		map[string]*[]string{"target": &targets},
+		map[string]*string{"dest": &dest},
+		map[string]*bool{"force": &force, "non-interactive": &nonInteractive},
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 2
+	}
+	if buildRoot == "" && len(pos) > 0 {
+		buildRoot = pos[0]
+	}
+	if buildRoot == "" {
+		buildRoot = "build"
+	}
+	if len(targets) == 0 {
+		targets = knownTargets
+	}
+	plan := install.Plan{
+		BuildRoot: buildRoot, Targets: targets, Dest: dest,
+		Force: force, NonInteractive: nonInteractive || !isTerminal(os.Stdin),
+		In: os.Stdin, Out: os.Stderr,
+	}
+	results, err := install.Run(plan)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
+	created, overwritten, merged, skipped := 0, 0, 0, 0
+	for _, r := range results {
+		fmt.Printf("  %-10s [%s] %s -> %s\n", r.Action, r.Target, r.Src, r.Dest)
+		switch r.Action {
+		case install.Created:
+			created++
+		case install.Overwritten:
+			overwritten++
+		case install.Merged:
+			merged++
+		case install.Skipped:
+			skipped++
+		}
+	}
+	fmt.Printf("\n%d created, %d overwritten, %d merged, %d skipped\n", created, overwritten, merged, skipped)
 	return 0
 }
 

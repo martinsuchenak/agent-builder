@@ -222,6 +222,52 @@ func TestRunCompileBranches(t *testing.T) {
 	}
 }
 
+func TestRunInstall(t *testing.T) {
+	build := t.TempDir()
+	os.MkdirAll(filepath.Join(build, "claude", ".claude", "commands"), 0o755)
+	os.WriteFile(filepath.Join(build, "claude", ".claude", "commands", "x.md"), []byte("x"), 0o644)
+	dest := t.TempDir()
+	out, code := captureStdout(func() int {
+		return runInstall([]string{build, "--dest", dest, "--target", "claude", "--non-interactive"})
+	})
+	if code != 0 {
+		t.Fatalf("install failed: %d", code)
+	}
+	if !strings.Contains(out, "created") {
+		t.Errorf("expected a created file in:\n%s", out)
+	}
+	if _, err := os.Stat(filepath.Join(dest, ".claude", "commands", "x.md")); err != nil {
+		t.Errorf("file not installed: %v", err)
+	}
+}
+
+func TestRunInstallMergeAndSkip(t *testing.T) {
+	build := t.TempDir()
+	os.MkdirAll(filepath.Join(build, "claude", ".claude", "commands"), 0o755)
+	os.WriteFile(filepath.Join(build, "claude", ".claude", "commands", "x.md"), []byte("new"), 0o644)
+	os.WriteFile(filepath.Join(build, "claude", "CLAUDE.md"),
+		[]byte("<!-- BEGIN ab:rule r1 -->\nbody\n<!-- END ab:rule r1 -->\n"), 0o644)
+
+	dest := t.TempDir()
+	os.MkdirAll(filepath.Join(dest, ".claude", "commands"), 0o755)
+	os.WriteFile(filepath.Join(dest, ".claude", "commands", "x.md"), []byte("old"), 0o644)
+	os.WriteFile(filepath.Join(dest, "CLAUDE.md"), []byte("hand content\n"), 0o644)
+
+	out, code := captureStdout(func() int {
+		return runInstall([]string{build, "--dest", dest, "--target", "claude", "--non-interactive"})
+	})
+	if code != 0 {
+		t.Fatalf("install failed: %d", code)
+	}
+	if !strings.Contains(out, "1 merged") || !strings.Contains(out, "1 skipped") {
+		t.Errorf("expected a merged + a skipped in:\n%s", out)
+	}
+	got, _ := os.ReadFile(filepath.Join(dest, "CLAUDE.md"))
+	if !strings.Contains(string(got), "hand content") || !strings.Contains(string(got), "body") {
+		t.Errorf("CLAUDE.md not merged:\n%s", got)
+	}
+}
+
 func TestRunValidateMultiTargetAndNewFlagError(t *testing.T) {
 	src := t.TempDir()
 	os.MkdirAll(filepath.Join(src, "artifacts", "commands"), 0o755)

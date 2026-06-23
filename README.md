@@ -36,6 +36,7 @@ agent-builder compile                  # compile every artifact to every target 
 agent-builder compile examples         # compile a different source dir
 agent-builder compile examples out     # ...and a different output dir
 agent-builder compile --target claude  # one target
+agent-builder install                  # copy build/ into each target's config location
 ```
 
 Source and output paths may be positional or flags (`--source`, `--out`). Run
@@ -125,6 +126,35 @@ invocation:
 If a `{{tool}}` token has no `@server` and none is known, an interactive run
 prompts for the server once and suggests persisting it as `@server` in the
 source. Non-interactive runs error loudly (catches typos): `agent-builder compile --non-interactive`.
+
+## Install
+
+`agent-builder install` copies the compiled `build/<target>/` output into each
+target's config location. By default it installs to the per-target **user**
+config dir (stripping the target's config prefix):
+
+| Target | Default install root |
+|---|---|
+| claude | `~/.claude` (`.claude/commands/x.md` → `~/.claude/commands/x.md`) |
+| opencode | `~/.config/opencode` |
+| codex | `~/.codex` |
+| kiro | `~/.kiro` |
+| copilot | `.` (repo-scoped) |
+
+```
+agent-builder install                    # all targets → their user config dirs
+agent-builder install --target claude    # one target
+agent-builder install --dest ~/proj      # custom root, raw paths (no strip)
+agent-builder install --force            # overwrite existing files without prompting
+agent-builder install --non-interactive  # never prompt; existing files are skipped
+```
+
+Existing files are **not** overwritten blindly: in an interactive run you're
+prompted `overwrite <path>? [y/N/a/q]` (yes / no / all / quit). With
+`--force` everything is overwritten; with `--non-interactive` existing files are
+skipped. Managed-region files (`CLAUDE.md`, `AGENTS.md`, …) are **merged** into
+any existing destination so hand-written content outside the managed regions is
+preserved.
 
 ## Compile matrix
 

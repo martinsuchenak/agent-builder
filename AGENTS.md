@@ -27,7 +27,7 @@ This project uses [Task](https://taskfile.dev). Common tasks:
 
 ```
 task              # fmt + lint + test + build (current platform)
-task build        # build dist/ab
+task build        # build dist/agent-builder
 task build-all    # cross-compile all OS/arch combos into dist/
 task test         # go test ./...
 task lint         # go vet ./...
@@ -35,6 +35,10 @@ task fmt          # go fmt ./...  (ALWAYS run before committing)
 task cover        # merged coverage report (project-wide)
 task clean        # rm -rf dist
 ```
+
+The CLI subcommands are `compile`, `install`, `validate`, `new`, `targets`.
+`install` copies `build/<target>/` into each target's user config dir, prompting
+before overwriting (or `--force`); managed-region files are merged, not clobbered.
 
 Plain Go also works: `go build ./...`, `go test ./...`, `go vet ./...`.
 

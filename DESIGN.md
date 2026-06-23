@@ -43,6 +43,10 @@ canonical source (ab-src/)
         │  token.RenderBody rewrites tokens using the target Runtime
         ▼
    write build/<target>/<RelPath>
+        │
+        ▼  (optional) agent-builder install
+   copy build/<target>/ → each target's config dir
+   (prompt before overwrite; managed files merged)
 ```
 
 Packages:
