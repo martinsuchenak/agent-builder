@@ -1,0 +1,96 @@
+version: "3"
+
+vars:
+  BINARY: ab
+  PACKAGE: ./cmd/ab
+  DIST: dist
+  LDFLAGS: -s -w
+
+tasks:
+  default:
+    desc: Format, lint, test, then build for the current platform
+    deps: [fmt, lint, test]
+    cmds:
+      - task: build
+
+  build:
+    desc: Build the {{.BINARY}} binary for the current platform
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.DIST}}/{{.BINARY}}"
+    cmds:
+      - mkdir -p {{.DIST}}
+      - go build -trimpath -ldflags="{{.LDFLAGS}}" -o {{.DIST}}/{{.BINARY}} {{.PACKAGE}}
+
+  build-all:
+    desc: Cross-compile {{.BINARY}} for windows/macOS/linux × arm64/amd64
+    cmds:
+      - cmd: |
+          set -e
+          mkdir -p {{.DIST}}
+          for p in "darwin arm64" "darwin amd64" "linux arm64" "linux amd64" "windows arm64 .exe" "windows amd64 .exe"; do
+            set -- $p
+            os="$1"; arch="$2"; ext="${3:-}"
+            echo "==> {{.BINARY}} $os/$arch"
+            GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags="{{.LDFLAGS}}" -o "{{.DIST}}/{{.BINARY}}-$os-$arch$ext" {{.PACKAGE}}
+          done
+
+  test:
+    desc: Run all tests
+    sources:
+      - "**/*.go"
+    cmds:
+      - go test ./...
+
+  cover:
+    desc: Print merged project-wide coverage (per function + total)
+    cmds:
+      - go test -coverpkg=./... -coverprofile={{.DIST}}/cover.out ./...
+      - go tool cover -func={{.DIST}}/cover.out
+
+  cover-html:
+    desc: Generate an HTML coverage report and open it
+    cmds:
+      - go test -coverpkg=./... -coverprofile={{.DIST}}/cover.out ./...
+      - go tool cover -html={{.DIST}}/cover.out
+
+  fmt:
+    desc: Format all Go code (go fmt)
+    cmds:
+      - go fmt ./...
+
+  fmt-check:
+    desc: Fail if any Go file is not formatted
+    cmds:
+      - cmd: |
+          out="$(gofmt -l .)"
+          if [ -n "$out" ]; then
+            echo "These files need formatting:"
+            echo "$out"
+            exit 1
+          fi
+
+  lint:
+    desc: Run go vet
+    sources:
+      - "**/*.go"
+    cmds:
+      - go vet ./...
+
+  tidy:
+    desc: Sync and verify module dependencies
+    cmds:
+      - go mod tidy
+
+  install:
+    desc: Install {{.BINARY}} into GOPATH/bin
+    cmds:
+      - go install {{.PACKAGE}}
+
+  clean:
+    desc: Remove the {{.DIST}} build directory
+    cmds:
+      - rm -rf {{.DIST}}

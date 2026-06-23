@@ -1,0 +1,27 @@
+# Build output
+/dist/
+/build/
+
+# Canonical source — project-specific, authored by the user (not part of the tool)
+/ab-src/
+
+# Compiled binaries
+/ab
+*.exe
+*.test
+
+# Go test / coverage artifacts
+*.out
+*.prof
+coverage.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
