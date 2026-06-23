@@ -23,11 +23,11 @@ import (
 const usage = `agent-builder — compile canonical AI-agent artifacts to platform-specific formats
 
 Usage:
-  ab compile  [source] [out] [flags]   source/out default to ./ab-src and ./build
-  ab validate [source] [flags]
-  ab new      <kind> <id> [source] [flags]
-  ab targets
-  ab help
+  agent-builder compile  [source] [out] [flags]   source/out default to ./ab-src and ./build
+  agent-builder validate [source] [flags]
+  agent-builder new      <kind> <id> [source] [flags]
+  agent-builder targets
+  agent-builder help
 
 Commands:
   compile   Compile artifacts to one or more targets
@@ -255,7 +255,7 @@ func runValidate(args []string) int {
 
 func runNew(args []string) int {
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: ab new <command|skill|rule|agent|power> <id> [source] [--source dir]")
+		fmt.Fprintln(os.Stderr, "usage: agent-builder new <command|skill|rule|agent|power> <id> [source] [--source dir]")
 		return 2
 	}
 	kind := args[0]

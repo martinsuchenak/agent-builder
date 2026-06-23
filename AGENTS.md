@@ -41,7 +41,7 @@ Plain Go also works: `go build ./...`, `go test ./...`, `go vet ./...`.
 ## Project layout
 
 ```
-cmd/ab/              entrypoint (main only — keep it trivial)
+cmd/agent-builder/              entrypoint (main only — keep it trivial)
 internal/
   canon/             parse artifacts (frontmatter) + tool registry / invocation config
   token/             token grammar + per-target runtime rendering of bodies

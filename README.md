@@ -17,7 +17,7 @@ canonical source → many targets.
 ## Install
 
 ```
-go install ./cmd/ab
+go install ./cmd/agent-builder
 ```
 
 or build locally with [Task](https://taskfile.dev):
@@ -31,16 +31,16 @@ task build      # → dist/ab
 Author artifacts under `ab-src/` (or any directory you choose), then:
 
 ```
-ab validate                 # check the canonical source (default: ./ab-src)
-ab compile                  # compile every artifact to every target → build/
-ab compile examples         # compile a different source dir
-ab compile examples out     # ...and a different output dir
-ab compile --target claude  # one target
+agent-builder validate                 # check the canonical source (default: ./ab-src)
+agent-builder compile                  # compile every artifact to every target → build/
+agent-builder compile examples         # compile a different source dir
+agent-builder compile examples out     # ...and a different output dir
+agent-builder compile --target claude  # one target
 ```
 
 Source and output paths may be positional or flags (`--source`, `--out`). Run
-`ab help` for the full CLI. The repo ships a small committed `examples/` you
-can try immediately: `ab compile examples build/examples`.
+`agent-builder help` for the full CLI. The repo ships a small committed `examples/` you
+can try immediately: `agent-builder compile examples build/examples`.
 
 ## Canonical format
 
@@ -124,7 +124,7 @@ invocation:
 
 If a `{{tool}}` token has no `@server` and none is known, an interactive run
 prompts for the server once and suggests persisting it as `@server` in the
-source. Non-interactive runs error loudly (catches typos): `ab compile --non-interactive`.
+source. Non-interactive runs error loudly (catches typos): `agent-builder compile --non-interactive`.
 
 ## Compile matrix
 

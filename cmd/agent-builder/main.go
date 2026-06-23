@@ -1,4 +1,4 @@
-// Command ab compiles canonical agent-builder artifacts to platform-specific formats.
+// Command agent-builder compiles canonical agent-builder artifacts to platform-specific formats.
 package main
 
 import (

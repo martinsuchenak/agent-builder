@@ -1,8 +1,8 @@
 version: "3"
 
 vars:
-  BINARY: ab
-  PACKAGE: ./cmd/ab
+  BINARY: agent-builder
+  PACKAGE: ./cmd/agent-builder
   DIST: dist
   LDFLAGS: -s -w
 
