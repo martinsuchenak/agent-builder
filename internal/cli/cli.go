@@ -19,6 +19,7 @@ import (
 	_ "agent-builder/internal/compile/power"
 	"agent-builder/internal/install"
 	"agent-builder/internal/token"
+	"agent-builder/internal/version"
 )
 
 const usage = `agent-builder — compile canonical AI-agent artifacts to platform-specific formats
@@ -36,6 +37,7 @@ Commands:
   validate  Check canonical artifacts for errors
   new       Scaffold a new canonical artifact (kind: command|skill|rule|agent|power)
   targets   List configured targets
+  version   Print the agent-builder version
   help      Show this message
 
 Paths (positional or flag):
@@ -53,6 +55,7 @@ Compile flags:
 
 Install flags:
   --target <name>    target to install (repeatable; default all known)
+  --build <dir>      compiled output root (default ./build)
   --dest <dir>       install root (default: each target's user config dir; raw paths)
   --force            overwrite existing files without prompting
   --non-interactive  never prompt; existing files are skipped
@@ -75,6 +78,9 @@ func Main(args []string) int {
 		return runNew(args[1:])
 	case "targets":
 		return runTargets(args[1:])
+	case "version", "-v", "--version":
+		fmt.Printf("agent-builder %s (%s)\n", version.Version, version.Date)
+		return 0
 	case "help", "-h", "--help":
 		fmt.Print(usage)
 		return 0
@@ -179,6 +185,8 @@ func runCompile(args []string) int {
 		Artifacts:   arts,
 		SkipErrors:  cont,
 		Interactive: interactiveMode,
+		In:          os.Stdin,
+		PromptOut:   os.Stderr,
 	}
 	if kindFlag != "" {
 		plan.OnlyKind = canon.Kind(kindFlag)
@@ -216,7 +224,7 @@ func runInstall(args []string) int {
 	var force, nonInteractive bool
 	pos, err := parseFlags(args,
 		map[string]*[]string{"target": &targets},
-		map[string]*string{"dest": &dest},
+		map[string]*string{"dest": &dest, "build": &buildRoot},
 		map[string]*bool{"force": &force, "non-interactive": &nonInteractive},
 	)
 	if err != nil {

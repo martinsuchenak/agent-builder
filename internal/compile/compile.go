@@ -115,7 +115,7 @@ type Plan struct {
 	SkipErrors  bool
 	Interactive bool
 	In          interface{ Read(p []byte) (int, error) }
-	Out2        interface{ Write(p []byte) (int, error) }
+	PromptOut   interface{ Write(p []byte) (int, error) }
 }
 
 // Result is the outcome of compiling one artifact for one target.
@@ -146,7 +146,7 @@ func Execute(plan Plan) []Result {
 
 	var resolver token.Resolver
 	if plan.Interactive {
-		resolver = newInteractiveResolver(plan.Tools, plan.In, plan.Out2)
+		resolver = newInteractiveResolver(plan.Tools, plan.In, plan.PromptOut)
 	}
 
 	var results []Result

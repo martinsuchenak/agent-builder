@@ -102,10 +102,10 @@ func (r *tokenReplacer) renderTool(spec string) (string, error) {
 		args = append(args, argPair{K: kv[:eq], V: kv[eq+1:]})
 	}
 
-	tmpl, reach, derived := r.tools.Resolve(toolID, r.target)
+	tmpl, reach, _ := r.tools.Resolve(toolID, r.target)
 	if reach == canon.Undefined && r.resolver != nil {
 		r.resolver.Resolve(toolID, r.target)
-		tmpl, reach, derived = r.tools.Resolve(toolID, r.target)
+		tmpl, reach, _ = r.tools.Resolve(toolID, r.target)
 	}
 	switch reach {
 	case canon.Unreachable:
@@ -113,7 +113,6 @@ func (r *tokenReplacer) renderTool(spec string) (string, error) {
 	case canon.Undefined:
 		return "", fmt.Errorf("tool %s has no @server declared and none known — add @<server> to the token (e.g. {{tool %s@fortix ...}}) or run interactively", toolID, toolID)
 	}
-	_ = derived
 	return r.renderDerived(tmpl, toolID, args), nil
 }
 
@@ -139,7 +138,7 @@ func (r *tokenReplacer) renderParams(args []argPair) string {
 
 func (r *tokenReplacer) renderValue(val string) string {
 	if len(val) >= 2 && val[0] == '"' && val[len(val)-1] == '"' {
-		return val[1 : len(val)-1]
+		val = val[1 : len(val)-1]
 	}
 	switch {
 	case val == "input":
@@ -149,8 +148,26 @@ func (r *tokenReplacer) renderValue(val string) string {
 	case strings.HasPrefix(val, "arg:"):
 		return r.rt.Arg(strings.TrimSpace(val[4:]))
 	default:
-		return val
+		return unescape(val)
 	}
+}
+
+// unescape decodes backslash escapes (\" → ", \\ → \) left intact inside
+// quoted tool arguments so literal quotes and backslashes can be expressed.
+func unescape(s string) string {
+	if !strings.ContainsRune(s, '\\') {
+		return s
+	}
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' && i+1 < len(s) {
+			b.WriteByte(s[i+1])
+			i++
+			continue
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
 }
 
 func splitFields(s string) ([]string, error) {
@@ -160,6 +177,10 @@ func splitFields(s string) ([]string, error) {
 	for i := 0; i < len(s); i++ {
 		c := s[i]
 		switch {
+		case c == '\\' && inQuote && i+1 < len(s):
+			cur.WriteByte(c)
+			cur.WriteByte(s[i+1])
+			i++
 		case c == '"':
 			inQuote = !inQuote
 			cur.WriteByte(c)

@@ -134,46 +134,28 @@ func splitFrontmatter(s string) (frontmatter, body string, err error) {
 }
 
 // LoadDir walks root and returns all artifacts: skill folders (SKILL.md),
-// power folders (POWER.md), and generic artifact .md files.
+// power folders (POWER.md), and generic artifact .md files, in a single pass.
 func LoadDir(root string) ([]*Artifact, error) {
 	var out []*Artifact
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		if !d.IsDir() {
-			return nil
-		}
-		if _, err := os.Stat(filepath.Join(path, "POWER.md")); err == nil {
-			a, err := ParsePower(path, filepath.Base(path))
-			if err != nil {
-				return err
-			}
-			out = append(out, a)
-			return filepath.SkipDir
-		}
-		if _, err := os.Stat(filepath.Join(path, "SKILL.md")); err == nil {
-			a, err := ParseSkill(path, filepath.Base(path))
-			if err != nil {
-				return err
-			}
-			out = append(out, a)
-			return filepath.SkipDir
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	err = filepath.WalkDir(root, func(path string, d os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
 		if d.IsDir() {
 			if _, err := os.Stat(filepath.Join(path, "POWER.md")); err == nil {
+				a, err := ParsePower(path, filepath.Base(path))
+				if err != nil {
+					return err
+				}
+				out = append(out, a)
 				return filepath.SkipDir
 			}
 			if _, err := os.Stat(filepath.Join(path, "SKILL.md")); err == nil {
+				a, err := ParseSkill(path, filepath.Base(path))
+				if err != nil {
+					return err
+				}
+				out = append(out, a)
 				return filepath.SkipDir
 			}
 			return nil

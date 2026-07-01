@@ -87,7 +87,9 @@ func Run(plan Plan) ([]FileResult, error) {
 			continue
 		}
 		abort, err := r.walkTarget(&results, target, srcRoot, dest, strip)
-		if err != nil {
+		// A user-initiated quit surfaces as errAbort; it is not a failure, so
+		// treat it as a clean stop rather than returning an error to the caller.
+		if err != nil && !errors.Is(err, errAbort) {
 			return results, err
 		}
 		if abort {
@@ -125,6 +127,8 @@ func (r *runner) walkTarget(results *[]FileResult, target, srcRoot, dest, strip 
 }
 
 func (r *runner) handle(results *[]FileResult, target, rel, destPath string, data []byte, abort *bool) error {
+	// Managed-region files are recognised by their marker and merged into any
+	// existing destination so hand-written content outside the regions survives.
 	if bytes.Contains(data, []byte("<!-- BEGIN ab:")) {
 		existing, _ := os.ReadFile(destPath)
 		if err := os.MkdirAll(filepath.Dir(destPath), 0o755); err != nil {

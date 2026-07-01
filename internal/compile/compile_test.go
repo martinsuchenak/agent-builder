@@ -57,7 +57,7 @@ func TestInteractiveResolveByServer(t *testing.T) {
 		Artifacts:   []*canon.Artifact{art},
 		Interactive: true,
 		In:          strings.NewReader("fortix\n"),
-		Out2:        &strings.Builder{},
+		PromptOut:   &strings.Builder{},
 	}
 	results := compile.Execute(plan)
 	if len(results) != 2 {
@@ -270,7 +270,7 @@ func TestExecuteSkippedCompilerAndInteractiveBlank(t *testing.T) {
 	res2 := compile.Execute(compile.Plan{
 		Out: filepath.Join(t.TempDir(), "b2"), Targets: []string{"claude"},
 		Tools: reg, Artifacts: []*canon.Artifact{bad}, SkipErrors: true,
-		Interactive: true, In: strings.NewReader("\n"), Out2: &strings.Builder{},
+		Interactive: true, In: strings.NewReader("\n"), PromptOut: &strings.Builder{},
 	})
 	if len(res2) != 1 || res2[0].Err == nil {
 		t.Fatalf("blank interactive input should leave tool undefined (error), got %+v", res2)

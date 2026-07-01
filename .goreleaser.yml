@@ -1,0 +1,67 @@
+version: 2
+
+project_name: agent-builder
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: agent-builder
+    main: ./cmd/agent-builder
+    binary: agent-builder
+    ldflags:
+      - -s -w -X agent-builder/internal/version.Version={{.Version}} -X agent-builder/internal/version.Date={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+# Homebrew Cask — distributes the prebuilt CLI binary via a tap.
+# `brews` (formulae) is deprecated in current GoReleaser, so the cask form is
+# used with a post-install hook that strips macOS quarantine from the binary.
+homebrew_casks:
+  - name: agent-builder
+    repository:
+      owner: martinsuchenak
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: https://github.com/martinsuchenak/agent-builder
+    description: Compile canonical AI-agent artifacts into platform-specific formats
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/agent-builder"]
+          end

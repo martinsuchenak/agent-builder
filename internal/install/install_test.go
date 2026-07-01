@@ -99,10 +99,13 @@ func TestPromptYesNoAllQuit(t *testing.T) {
 		dest := t.TempDir()
 		writeFile(t, filepath.Join(dest, ".claude", "commands", "a.md"), "old")
 		writeFile(t, filepath.Join(dest, ".claude", "commands", "b.md"), "old")
-		res, _ := install.Run(install.Plan{
+		res, err := install.Run(install.Plan{
 			BuildRoot: build, Targets: []string{"claude"}, Dest: dest,
 			In: strings.NewReader(c.in), Out: io.Discard,
 		})
+		if err != nil {
+			t.Errorf("input %q: user abort should not surface as an error, got %v", c.in, err)
+		}
 		if c.aborted {
 			if len(res) != 0 {
 				t.Errorf("input %q: expected abort (no results), got %+v", c.in, res)

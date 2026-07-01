@@ -209,6 +209,19 @@ func TestRenderBodyToolBadArg(t *testing.T) {
 	}
 }
 
+func TestRenderBodyToolEscapedQuotes(t *testing.T) {
+	reg := newReg()
+	reg.SetServer("echo", "fortix")
+	body := `{{tool echo@fortix msg="he said \"hi\""}}`
+	out, err := RenderBody(body, MarkdownRuntime{RulesFileVal: "AGENTS.md"}, reg, "claude", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, `msg=he said "hi"`) {
+		t.Errorf("escaped quotes should resolve to literal quotes: %s", out)
+	}
+}
+
 func TestValidateBody(t *testing.T) {
 	reg := newReg()
 	if err := ValidateBody("no tools here", reg, "claude"); err != nil {
